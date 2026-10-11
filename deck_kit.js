@@ -269,13 +269,14 @@ function newDeck(layout) {
   /** 五行エネルギーの十字図。d = {up,left,center,right,down,total,el:{up:"木",…}} */
   C.gogyoCross = (s, d, o) => {
     o = o || {}; const cx = o.cx || 3.6, cy = o.cy || 4.1, scale = o.scale || 1.0;
+    const dmOf = v => (0.7 + 0.9 * (v / Math.max(1, d.total) * 5 / 2)) * scale;
     const node = (x, y, v, el, tag) => {
       const dm = (0.7 + 0.9 * (v / Math.max(1, d.total) * 5 / 2)) * scale;
       const col = GOGYO[el];
       s.addShape(p.ShapeType.ellipse, { x: x - dm / 2, y: y - dm / 2, w: dm, h: dm,
         fill: { color: col }, line: { color: col, width: 0 } });
       s.addText(String(v), { x: x - dm / 2, y: y - dm / 2 + dm * 0.24, w: dm, h: dm * 0.4,
-        fontFace: MIN, fontSize: 22, bold: true, color: P.WHITE, align: "center", margin: 0 });
+        fontFace: MIN, fontSize: Math.min(22, dm * 24), bold: true, color: P.WHITE, align: "center", margin: 0 });
       s.addText(el + "　" + tag, { x: x - 1.0, y: y + dm / 2 + 0.06, w: 2.0, h: 0.28,
         fontFace: GO, fontSize: 10.5, color: P.INK, align: "center", margin: 0 }); };
     node(cx, cy - 1.55, d.up,     d.el.up,     "印（守り）");
@@ -283,7 +284,8 @@ function newDeck(layout) {
     node(cx, cy,        d.center, d.el.center, "自分");
     node(cx + 2.15, cy, d.right,  d.el.right,  "財（豊かさ）");
     node(cx, cy + 1.6,  d.down,   d.el.down,   "食傷（表現）");
-    s.addText("総和  T." + d.total, { x: cx - 1.2, y: cy + 2.25, w: 2.4, h: 0.3,
+    s.addText("総和  T." + d.total, { x: cx - 1.2,
+      y: Math.max(cy + 2.25, cy + 1.6 + dmOf(d.down) / 2 + 0.42), w: 2.4, h: 0.3,
       fontFace: MIN, fontSize: 13, color: P.GOLD, align: "center", margin: 0 });
   };
 

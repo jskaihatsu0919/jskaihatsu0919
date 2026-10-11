@@ -21,19 +21,26 @@ echo "▶ 依存パッケージを導入"
 pip install sxtwl --break-system-packages -q
 
 echo "▶ ${REPO}@${BRANCH} を取得"
-curl -sSL "https://codeload.github.com/${REPO}/tar.gz/refs/heads/${BRANCH}" \
-  | tar xz -C "$TMP" --strip-components=1
+SRC="$TMP"
+if ! curl -sSL "https://codeload.github.com/${REPO}/tar.gz/refs/heads/${BRANCH}" \
+  | tar xz -C "$TMP" --strip-components=1 2>/dev/null; then
+  # 一部の実行環境ではアーカイブ取得（codeload）が 403 になるため、git clone で代替する
+  echo "  （アーカイブ取得に失敗 → git clone で代替）"
+  git clone --depth 1 --quiet "https://github.com/${REPO}" "$TMP/repo"
+  SRC="$TMP/repo"
+fi
 
 echo "▶ 実行できる形に配置 → ${DEST}"
 rm -rf "$DEST"
 mkdir -p "$DEST/engine/data" "$DEST/lib" "$DEST/docs"
 # リポジトリ内のどこにあっても拾えるよう find で探す
-place() { local f; f="$(find "$TMP" -type f -name "$1" | head -1)"; [ -n "$f" ] && cp "$f" "$2/" ; }
+place() { local f; f="$(find "$SRC" -type f -name "$1" | head -1)";
+  if [ -n "$f" ]; then cp "$f" "$2/"; else echo "  !! 見つかりません: $1"; fi; }
 for f in core.py compat.py report.py test_charts.py test_tables.py; do place "$f" "$DEST/engine"; done
 place tables.json      "$DEST/engine/data"
-for f in deck_kit.js deck_kit_casual.js example_build.js; do place "$f" "$DEST/lib"; done
+for f in deck_kit.js deck_kit_casual.js casual_parts_29p.js example_build.js; do place "$f" "$DEST/lib"; done
 place qa.py            "$DEST"
-find "$TMP" -type f -name "*.md" -exec cp {} "$DEST/docs/" \; 2>/dev/null || true
+find "$SRC" -type f -name "*.md" -exec cp {} "$DEST/docs/" \; 2>/dev/null || true
 rm -rf "$TMP"
 
 echo "▶ 照合テスト"
